@@ -32,6 +32,7 @@ public class Booking {
     @Setter
     private LocalDateTime endTime;
 
+    @Column(nullable = false)
     @Setter
     private Integer numberOfPeople;
 
@@ -44,7 +45,7 @@ public class Booking {
     @Setter
     private BigDecimal totalPrice;
 
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
