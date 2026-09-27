@@ -8,6 +8,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "bookings")
@@ -19,10 +21,10 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id", nullable = false)
-//    @Setter
-//    private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @Setter
+    private User user;
 
     @Column(nullable = false)
     @Setter
@@ -41,9 +43,8 @@ public class Booking {
     @Setter
     private BookingStatus status;
 
-    @Column(nullable = false)
-    @Setter
-    private BigDecimal totalPrice;
+    @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BookingItem> items = new ArrayList<>();
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -54,14 +55,28 @@ public class Booking {
     @Getter(AccessLevel.NONE)
     private Long version;
 
-    public Booking(LocalDateTime startTime,
-                   LocalDateTime endTime, Integer numberOfPeople, BigDecimal totalPrice) {
-//        this.user = user;
+    public Booking(User user, LocalDateTime startTime,
+                   LocalDateTime endTime, Integer numberOfPeople) {
+        this.user = user;
         this.startTime = startTime;
         this.endTime = endTime;
         this.numberOfPeople = numberOfPeople;
-        this.totalPrice = totalPrice;
         this.status = BookingStatus.PENDING;
+    }
+
+    public void addItem(BookableResource resource, Integer quantity, BigDecimal priceAtBooking) {
+        BookingItem item = new BookingItem(this, resource, quantity, priceAtBooking);
+        items.add(item);
+    }
+
+    public void removeItem(BookingItem item) {
+        items.remove(item);
+    }
+
+    public BigDecimal getTotalPrice() {
+        return items.stream()
+                .map(BookingItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @PrePersist
