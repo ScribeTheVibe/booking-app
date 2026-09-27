@@ -11,14 +11,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "resources")
+@Table(name = "bookable_resources")
 @Getter
 @NoArgsConstructor
-public class Resource {
+public class BookableResource {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToMany(mappedBy = "bookableResource", fetch = FetchType.LAZY)
+    private List<BookingItem> bookingItems;
 
     @Column(nullable = false)
     @Setter
@@ -38,11 +41,11 @@ public class Resource {
 
     @Column(nullable = false)
     @Setter
-    private Integer totalCapacity; // how many can be booked in parallel
+    private Integer totalCapacity;
 
     @Column(nullable = false)
     @Setter
-    private Integer availableUnits; // current availability
+    private Integer availableUnits;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -54,10 +57,7 @@ public class Resource {
     @Getter(AccessLevel.NONE)
     private Long version;
 
-//    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-//    private List<Booking> bookings;
-
-    public Resource (String name, String description, ResourceType type,
+    public BookableResource(String name, String description, ResourceType type,
                             BigDecimal pricePerUnit, Integer totalCapacity) {
         this.name = name;
         this.description = description;
