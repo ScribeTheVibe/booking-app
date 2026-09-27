@@ -1,7 +1,9 @@
 package com.bookingapp.bookingapp.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
@@ -9,6 +11,7 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @Getter
+@NoArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,7 +39,9 @@ public class User {
     @Column(name = "phone", nullable = false, unique = true)
     private String phone;
 
-    protected User(){}
+    @Version
+    @Getter(AccessLevel.NONE)
+    private Long version;
 
     public User(String firstName, String lastName, String passwordHash, String email, String phone){
         this.firstName = firstName;
@@ -44,5 +49,17 @@ public class User {
         this.passwordHash = passwordHash;
         this.email = email;
         this.phone = phone;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User that)) return false;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }
