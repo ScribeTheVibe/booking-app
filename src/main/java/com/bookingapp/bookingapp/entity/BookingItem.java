@@ -9,7 +9,9 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "booking_items")
+@Table(name = "booking_items", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"booking_id", "resource_id"})
+})
 @Getter
 @NoArgsConstructor
 public class BookingItem {
@@ -47,5 +49,17 @@ public class BookingItem {
 
     public BigDecimal getSubtotal() {
         return priceAtBooking.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BookingItem that)) return false;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

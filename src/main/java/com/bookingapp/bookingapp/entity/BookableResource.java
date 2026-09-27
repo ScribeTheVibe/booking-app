@@ -33,6 +33,7 @@ public class BookableResource {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Setter
     private ResourceType type;
 
     @Column(nullable = false)
@@ -75,6 +76,18 @@ public class BookableResource {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BookableResource that)) return false;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }
 
