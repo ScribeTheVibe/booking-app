@@ -1,10 +1,8 @@
-package com.bookingapp.bookingapp.repository;
+package com.bookingapp.bookingapp.dto;
 
-import com.bookingapp.bookingapp.entity.Booking;
 import com.bookingapp.bookingapp.entity.BookingStatus;
 import com.bookingapp.bookingapp.entity.Session;
 
-import java.time.Clock;
 import java.time.LocalDate;
 
 /**
@@ -17,9 +15,4 @@ public record ResourceUsage(Long resourceId,
                             Session session,
                             BookingStatus status,
                             Long quantity) {
-
-    /** Confirmed rows always hold capacity; pending rows hold it until their session starts. */
-    public boolean holdsCapacity(Clock clock) {
-        return !Booking.isDropped(status, session, date, clock);
-    }
 }
