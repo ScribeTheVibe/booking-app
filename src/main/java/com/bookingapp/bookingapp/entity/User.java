@@ -5,13 +5,16 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "users")
 @Getter
 @NoArgsConstructor
+@SQLRestriction("deleted_at IS NULL")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +42,10 @@ public class User {
     @Column(name = "phone", nullable = false, unique = true)
     private String phone;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+
     @Version
     @Getter(AccessLevel.NONE)
     private Long version;
@@ -61,5 +68,19 @@ public class User {
     @Override
     public int hashCode() {
         return getClass().hashCode();
+    }
+
+    public boolean isDeleted(){
+        return deletedAt != null;
+    }
+
+    public void markDeleted(LocalDateTime now){
+        this.deletedAt = now;
+        this.email = "deleted_" + id + "_" + email;
+        this.phone = "deleted_" + id + "_" + phone;
+    }
+
+    public void changePasswordHash(String newHash){
+        this.passwordHash = newHash;
     }
 }
