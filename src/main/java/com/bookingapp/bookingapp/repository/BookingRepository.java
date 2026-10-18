@@ -1,28 +1,31 @@
 package com.bookingapp.bookingapp.repository;
 
-import com.bookingapp.bookingapp.entity.BookableResource;
 import com.bookingapp.bookingapp.entity.Booking;
 import com.bookingapp.bookingapp.entity.BookingStatus;
-import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Customer-facing queries only. Every query that returns bookings to be shown loads
+ * items and their resources up front, so mapping to DTOs never triggers lazy loading.
+ * Admin queries (by date, by status) will be added with the admin service.
+ */
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-    List<Booking> findByUserId(Long userId);
-    List<Booking> findByStatus(BookingStatus status);
-    List<Booking> findByStatusAndEndTimeBefore(BookingStatus status, LocalDateTime time);
-    List<Booking> findByUserIdAndStatus(Long userId, BookingStatus status);
 
-    @Query("SELECT b FROM Booking b " +
-            "LEFT JOIN FETCH b.items i " +
-            "LEFT JOIN FETCH i.bookableResource " +
-            "WHERE b.id = :id")
-    Optional<Booking> findByIdWithItems(@Param("id") Long id);
+    @EntityGraph(attributePaths = {"items", "items.resource"})
+    @Query("SELECT b FROM Booking b WHERE b.id = :id AND b.user.id = :userId")
+    Optional<Booking> findByIdAndUserIdWithItems(@Param("id") Long id,
+                                                 @Param("userId") Long userId);
+
+    @EntityGraph(attributePaths = {"items", "items.resource"})
+    List<Booking> findByUserIdOrderByDateDescIdDesc(Long userId);
+
+    /** Matches stored decisions only; use the service for time-derived lifecycle filtering. */
+    @EntityGraph(attributePaths = {"items", "items.resource"})
+    List<Booking> findByUserIdAndStatusOrderByDateDescIdDesc(Long userId, BookingStatus status);
 }
