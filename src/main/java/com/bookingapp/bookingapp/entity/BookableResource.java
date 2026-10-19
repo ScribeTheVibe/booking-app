@@ -4,90 +4,128 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.Instant;
 
+/**
+ * A ticket type or gear type with a fixed capacity per half-day.
+ * Capacity is the same for every date.
+ */
 @Entity
-@Table(name = "bookable_resources")
+@Table(name = "bookable_resources", check = @CheckConstraint(constraint = "total_capacity >= 0 AND unit_price >= 0"))
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BookableResource {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "bookableResource", fetch = FetchType.LAZY)
-    private List<BookingItem> bookingItems;
-
-    @Column(nullable = false)
-    @Setter
+    @Column(nullable = false, length = 100)
     private String name;
 
     @Column(columnDefinition = "TEXT")
-    @Setter
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Setter
+    @Column(nullable = false, length = 20)
     private ResourceType type;
 
-    @Column(nullable = false)
-    @Setter
-    private BigDecimal pricePerUnit;
+    @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal unitPrice;
 
-    @Column(nullable = false)
-    @Setter
+    @Column(name = "total_capacity", nullable = false)
     private Integer totalCapacity;
 
     @Column(nullable = false)
-    @Setter
-    private Integer availableUnits;
+    private boolean active = true;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
-    @Setter
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     @Version
-    @Getter(AccessLevel.NONE)
     private Long version;
 
     public BookableResource(String name, String description, ResourceType type,
-                            BigDecimal pricePerUnit, Integer totalCapacity) {
-        this.name = name;
+                            BigDecimal unitPrice, int totalCapacity) {
+        if (type == null) {
+            throw new IllegalArgumentException("Resource type is required");
+        }
+        this.name = requireText(name, "Resource name");
         this.description = description;
         this.type = type;
-        this.pricePerUnit = pricePerUnit;
-        this.totalCapacity = totalCapacity;
-        this.availableUnits = totalCapacity;
+        this.unitPrice = requireNonNegative(unitPrice, "Unit price");
+        this.totalCapacity = requireNonNegative(totalCapacity, "Total capacity");
+    }
+
+    public void rename(String newName) {
+        this.name = requireText(newName, "Resource name");
+    }
+
+    public void changeDescription(String newDescription) {
+        this.description = newDescription;
+    }
+
+    public void changeUnitPrice(BigDecimal newPrice) {
+        this.unitPrice = requireNonNegative(newPrice, "Unit price");
+    }
+
+    public void changeTotalCapacity(int newCapacity) {
+        this.totalCapacity = requireNonNegative(newCapacity, "Total capacity");
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
     }
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = Instant.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = Instant.now();
+    }
+
+    private static String requireText(String value, String label) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(label + " is required");
+        }
+        return value.trim();
+    }
+
+    private static BigDecimal requireNonNegative(BigDecimal value, String label) {
+        if (value == null || value.signum() < 0) {
+            throw new IllegalArgumentException(label + " must be zero or greater");
+        }
+        return value;
+    }
+
+    private static int requireNonNegative(int value, String label) {
+        if (value < 0) {
+            throw new IllegalArgumentException(label + " must be zero or greater");
+        }
+        return value;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof BookableResource that)) return false;
-        return id != null && id.equals(that.id);
+        return getId() != null && getId().equals(that.getId());
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return BookableResource.class.hashCode();
     }
 }
-

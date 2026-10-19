@@ -4,83 +4,103 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.Instant;
+import java.util.Locale;
 
+/**
+ * A customer account. Bookings are loaded through BookingRepository, not through this entity.
+ * Email is stored trimmed and lower-cased so the unique constraint is not case-sensitive in practice.
+ */
 @Entity
 @Table(name = "users")
 @Getter
-@NoArgsConstructor
-@SQLRestriction("deleted_at IS NULL")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Booking> bookings;
-
-    @Setter
-    @Column(name = "first_name", nullable = false)
+    @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
-    @Setter
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Setter
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Setter
-    @Column(name = "phone", nullable = false, unique = true)
+    @Column(name = "phone", nullable = false, unique = true, length = 30)
     private String phone;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     @Version
-    @Getter(AccessLevel.NONE)
     private Long version;
 
-    public User(String firstName, String lastName, String passwordHash, String email, String phone){
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.passwordHash = passwordHash;
-        this.email = email;
-        this.phone = phone;
+    public User(String firstName, String lastName, String passwordHash, String email, String phone) {
+        this.firstName = requireText(firstName, "First name");
+        this.lastName = requireText(lastName, "Last name");
+        this.passwordHash = requireText(passwordHash, "Password hash");
+        this.email = normalizeEmail(email);
+        this.phone = requireText(phone, "Phone");
+    }
+
+    public void changeName(String firstName, String lastName) {
+        this.firstName = requireText(firstName, "First name");
+        this.lastName = requireText(lastName, "Last name");
+    }
+
+    public void changeEmail(String email) {
+        this.email = normalizeEmail(email);
+    }
+
+    public void changePhone(String phone) {
+        this.phone = requireText(phone, "Phone");
+    }
+
+    public void changePasswordHash(String newPasswordHash) {
+        this.passwordHash = requireText(newPasswordHash, "Password hash");
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = Instant.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = Instant.now();
+    }
+
+    private static String normalizeEmail(String email) {
+        return requireText(email, "Email").toLowerCase(Locale.ROOT);
+    }
+
+    private static String requireText(String value, String label) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(label + " is required");
+        }
+        return value.trim();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof User that)) return false;
-        return id != null && id.equals(that.id);
+        return getId() != null && getId().equals(that.getId());
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    public boolean isDeleted(){
-        return deletedAt != null;
-    }
-
-    public void markDeleted(LocalDateTime now){
-        this.deletedAt = now;
-        this.email = "deleted_" + id + "_" + email;
-        this.phone = "deleted_" + id + "_" + phone;
-    }
-
-    public void changePasswordHash(String newHash){
-        this.passwordHash = newHash;
+        return User.class.hashCode();
     }
 }
