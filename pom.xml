@@ -27,8 +27,23 @@
         <url/>
     </scm>
     <properties>
-        <java.version>22</java.version>
+        <java.version>25</java.version>
+        <!-- Security overrides until Spring Boot manages patched versions. -->
+        <jackson-bom.version>3.1.8</jackson-bom.version>
+        <jackson-2-bom.version>2.21.8</jackson-2-bom.version>
+        <logback.version>1.6.5</logback.version>
+        <postgresql.version>42.7.14</postgresql.version>
+        <tomcat.version>11.0.27</tomcat.version>
     </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>9.11.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -49,7 +64,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>3.1.0</version>
+            <version>3.1.1</version>
         </dependency>
 
         <dependency>

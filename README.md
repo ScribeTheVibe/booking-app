@@ -37,6 +37,22 @@ as customer commands, and handle optimistic-lock conflicts. Admin endpoints are
 not implemented yet. Existing database status constraints must allow `REJECTED`;
 do not rely on `ddl-auto: update` to migrate old check constraints in production.
 
+### API authentication
+
+For local development, run `.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"`
+and send `X-Dev-User-Id` with a positive, existing customer ID on every booking request.
+Only the booking API bypasses CSRF in this profile. The header is deliberately
+spoofable: never enable `dev` on a deployed application.
+
+Without `dev`, the API requires Spring Security authentication and ignores the
+development header. Trusted authentication code must resolve the customer account
+and install an authenticated token containing `BookingPrincipal(userId)` in the
+security context. Login/token verification is not implemented yet; until integrated,
+production access fails closed. Generic usernames and generated development users
+are not accepted as customer identities. CSRF protection remains enabled for
+production writes; session-based clients must supply a valid CSRF token.
+Other routes are denied until explicitly configured.
+
 ### Tests
 
 Run `.\mvnw.cmd test` on Windows. Service tests use a fixed clock and H2, including
