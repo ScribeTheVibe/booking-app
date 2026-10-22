@@ -127,7 +127,7 @@ class BookingServiceIntegrationTest {
     }
 
     private Booking create(LocalDate date, Session session) {
-        return service.createBooking(userId, date, session, 1, List.of(new BookingItemRequest(ticketId, 1)));
+        return service.createBooking(userId, date, session, List.of(new BookingItemRequest(ticketId, 1)));
     }
 
     private void assertOneSuccess(Callable<Booking> first, Callable<Booking> second) throws Exception {

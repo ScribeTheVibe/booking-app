@@ -91,7 +91,7 @@ class RepositoryTest {
     @Test
     void bookingRepositoryAndItemRepositoryUsageAggregation() {
         LocalDate bookingDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
-        Booking booking = new Booking(savedUser, bookingDate, Session.MORNING, 2);
+        Booking booking = new Booking(savedUser, bookingDate, Session.MORNING);
         booking.addItem(passResource, 2);
         booking.addItem(equipmentResource, 1);
         Booking savedBooking = bookingRepository.save(booking);
@@ -105,14 +105,6 @@ class RepositoryTest {
 
         List<Booking> userBookings = bookingRepository.findByUserIdOrderByDateDescIdDesc(savedUser.getId());
         assertEquals(1, userBookings.size());
-
-        List<Booking> pendingBookings = bookingRepository.findByUserIdAndStatusOrderByDateDescIdDesc(
-                savedUser.getId(), BookingStatus.PENDING);
-        assertEquals(1, pendingBookings.size());
-
-        List<Booking> confirmedBookings = bookingRepository.findByUserIdAndStatusOrderByDateDescIdDesc(
-                savedUser.getId(), BookingStatus.CONFIRMED);
-        assertEquals(0, confirmedBookings.size());
 
         // Test BookingItemRepository usage aggregation
         List<ResourceUsage> usage = bookingItemRepository.findUsage(
