@@ -59,14 +59,14 @@ public class BookingController {
     @PostMapping("/availability")
     public List<SessionAvailability> availability(@Valid @RequestBody AvailabilityRequest request) {
         return bookingService.findAvailability(
-                request.numberOfPeople(), request.items(), request.fromDate(), request.toDate());
+                request.items(), request.fromDate(), request.toDate());
     }
 
     @PostMapping
     public ResponseEntity<BookingResponse> create(@Valid @RequestBody CreateBookingRequest request) {
         Booking booking = bookingService.createBooking(
                 currentUser.requireUserId(),
-                request.date(), request.session(), request.numberOfPeople(), request.items());
+                request.date(), request.session(), request.items());
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}").buildAndExpand(booking.getId()).toUri();

@@ -24,8 +24,4 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @EntityGraph(attributePaths = {"items", "items.resource"})
     List<Booking> findByUserIdOrderByDateDescIdDesc(Long userId);
-
-    /** Matches stored decisions only; use the service for time-derived lifecycle filtering. */
-    @EntityGraph(attributePaths = {"items", "items.resource"})
-    List<Booking> findByUserIdAndStatusOrderByDateDescIdDesc(Long userId, BookingStatus status);
 }

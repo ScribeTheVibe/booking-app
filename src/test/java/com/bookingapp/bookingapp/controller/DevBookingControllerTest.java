@@ -70,7 +70,7 @@ class DevBookingControllerTest {
     void createReturnsLocationAndUsesCaller() throws Exception {
         var booking = mock(com.bookingapp.bookingapp.entity.Booking.class);
         when(booking.getId()).thenReturn(12L);
-        when(service.createBooking(eq(7L), any(), any(), eq(1), any())).thenReturn(booking);
+        when(service.createBooking(eq(7L), any(), any(), any())).thenReturn(booking);
         mvc.perform(post("/api/bookings").header("X-Dev-User-Id", "7")
                         .contentType("application/json").content("""
                                 {"date":"2030-01-04","session":"MORNING","numberOfPeople":1,
@@ -78,7 +78,7 @@ class DevBookingControllerTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "http://localhost/api/bookings/12"));
-        verify(service).createBooking(eq(7L), any(), any(), eq(1), any());
+        verify(service).createBooking(eq(7L), any(), any(), any());
     }
 
     @Test

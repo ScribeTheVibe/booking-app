@@ -66,7 +66,7 @@ class EntityTest {
     void bookingValidationOnPersistAndUpdate() {
         User user = new User("Alice", "Smith", "hash", "alice@example.com", "+1122334455");
         LocalDate nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
-        Booking booking = new Booking(user, nextFriday, Session.MORNING, 2);
+        Booking booking = new Booking(user, nextFriday, Session.MORNING);
 
         BookableResource ticket = new BookableResource("Morning Ticket", "Desc",
                 ResourceType.TICKET, new BigDecimal("30.00"), 50);
@@ -92,7 +92,7 @@ class EntityTest {
     void bookingItemSubtotalCalculation() {
         User user = new User("Bob", "Brown", "hash", "bob@example.com", "+1223344556");
         LocalDate nextSaturday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.SATURDAY));
-        Booking booking = new Booking(user, nextSaturday, Session.EVENING, 3);
+        Booking booking = new Booking(user, nextSaturday, Session.EVENING);
 
         BookableResource ticket = new BookableResource("Pass", "Desc",
                 ResourceType.TICKET, new BigDecimal("25.00"), 50);
