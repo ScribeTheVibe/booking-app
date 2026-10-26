@@ -2,10 +2,7 @@ package com.bookingapp.bookingapp.controller;
 
 import com.bookingapp.bookingapp.dto.BookingResponse;
 import com.bookingapp.bookingapp.dto.BookingSummaryResponse;
-import com.bookingapp.bookingapp.entity.BookableResource;
-import com.bookingapp.bookingapp.entity.Booking;
-import com.bookingapp.bookingapp.entity.BookingItem;
-import com.bookingapp.bookingapp.entity.ResortTime;
+import com.bookingapp.bookingapp.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,16 +23,13 @@ public class BookingMapper {
     public BookingResponse toResponse(Booking booking) {
         Clock asOf = asOf();
         List<BookingResponse.Item> items = booking.getItems().stream().map(this::toItem).toList();
-        BigDecimal total = items.stream()
-                .map(BookingResponse.Item::lineTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new BookingResponse(
                 booking.getId(),
                 booking.getDate(),
                 booking.getSession(),
-                booking.getNumberOfPeople(),
+                booking.numberOfPeople(),
                 booking.effectiveStatus(asOf),
-                total,
+                booking.totalPrice(),
                 items);
     }
 
@@ -43,7 +37,7 @@ public class BookingMapper {
         Clock asOf = asOf();
         return bookings.stream()
                 .map(b -> new BookingSummaryResponse(
-                        b.getId(), b.getDate(), b.getSession(), b.getNumberOfPeople(),
+                        b.getId(), b.getDate(), b.getSession(), b.numberOfPeople(),
                         b.effectiveStatus(asOf)))
                 .toList();
     }

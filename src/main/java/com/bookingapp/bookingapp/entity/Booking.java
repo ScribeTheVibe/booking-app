@@ -17,14 +17,14 @@ import java.util.List;
 /**
  * One customer, one date, one session. Everyone in the group belongs to this booking.
  * Holds capacity while PENDING or CONFIRMED. "Dropped" and "completed" are derived, not stored.
+ * The party size is derived too: it is the number of ticket units on the booking.
  */
 @Entity
 @Table(name = "bookings",
         indexes = {
                 @Index(name = "idx_bookings_date_status", columnList = "booking_date, status"),
                 @Index(name = "idx_bookings_user", columnList = "user_id")
-        },
-        check = @CheckConstraint(constraint = "number_of_people > 0"))
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Booking {
@@ -44,9 +44,6 @@ public class Booking {
     @Column(nullable = false, length = 20)
     private Session session;
 
-    @Column(name = "number_of_people", nullable = false)
-    private Integer numberOfPeople;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private BookingStatus status;
@@ -65,16 +62,14 @@ public class Booking {
     @Version
     private Long version;
 
-    public Booking(User user, LocalDate date, Session session, int numberOfPeople) {
+    public Booking(User user, LocalDate date, Session session) {
         if (user == null) throw new IllegalArgumentException("User is required");
         if (session == null) throw new IllegalArgumentException("Session is required");
-        if (numberOfPeople <= 0) throw new IllegalArgumentException("Number of people must be greater than zero");
         requireOpenDay(date);
 
         this.user = user;
         this.date = date;
         this.session = session;
-        this.numberOfPeople = numberOfPeople;
         this.status = BookingStatus.PENDING;
     }
 
@@ -97,7 +92,7 @@ public class Booking {
     }
 
     /**
-     * Moves the booking to another date. Session, group size, items, and status are unchanged.
+     * Moves the booking to another date. Session, items, and status are unchanged.
      * Deadline and capacity rules are checked by the service before calling this.
      */
     public void moveTo(LocalDate newDate) {
@@ -194,6 +189,14 @@ public class Booking {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    /** Party size: one ticket unit per person. Needs items and items.resource loaded. */
+    public int numberOfPeople() {
+        return items.stream()
+                .filter(i -> i.getResource().getType() == ResourceType.TICKET)
+                .mapToInt(BookingItem::getQuantity)
+                .sum();
+    }
+
     /** Keep collection changes inside the aggregate so callers cannot bypass addItem rules. */
     public List<BookingItem> getItems() {
         return Collections.unmodifiableList(items);
@@ -213,18 +216,13 @@ public class Booking {
         updatedAt = Instant.now();
     }
 
-    /** Final persistence guard: a booking needs exactly one ticket per group member. */
+    /** Final persistence guard: a booking needs at least one item, and at least one ticket. */
     private void validateItems() {
         if (items.isEmpty()) {
             throw new IllegalStateException("A booking must contain at least one item");
         }
-        long tickets = items.stream()
-                .filter(i -> i.getResource().getType() == ResourceType.TICKET)
-                .mapToLong(BookingItem::getQuantity)
-                .sum();
-        if (tickets != numberOfPeople) {
-            throw new IllegalStateException("Ticket quantity (" + tickets
-                    + ") must equal the number of people (" + numberOfPeople + ")");
+        if (numberOfPeople() <= 0) {
+            throw new IllegalStateException("A booking must contain at least one ticket");
         }
     }
 

@@ -59,7 +59,7 @@ class BookingServiceTest {
 
     @Test
     void createSnapshotsPricesAndMergesItemsWithIndependentGearQuantities() {
-        Booking booking = service.createBooking(1L, friday, Session.FULL_DAY, 2,
+        Booking booking = service.createBooking(1L, friday, Session.FULL_DAY,
                 List.of(new BookingItemRequest(1L, 1), new BookingItemRequest(1L, 1),
                         new BookingItemRequest(2L, 5)));
         assertEquals(BookingStatus.PENDING, booking.getStatus());
@@ -76,7 +76,7 @@ class BookingServiceTest {
             return List.of(ticket, gear);
         });
         assertThrows(IllegalArgumentException.class,
-                () -> service.createBooking(1L, friday, Session.MORNING, 1, request(1)));
+                () -> service.createBooking(1L, friday, Session.MORNING,  request(1)));
         verify(bookings, never()).save(any());
     }
 
@@ -87,7 +87,7 @@ class BookingServiceTest {
                 new ResourceUsage(1L, friday, Session.MORNING, BookingStatus.CONFIRMED,
                         (long) Integer.MAX_VALUE)));
         assertThrows(InsufficientAvailabilityException.class,
-                () -> service.createBooking(1L, friday, Session.MORNING, 1, request(1)));
+                () -> service.createBooking(1L, friday, Session.MORNING,  request(1)));
     }
 
     @Test
@@ -103,16 +103,16 @@ class BookingServiceTest {
         when(ticket.getTotalCapacity()).thenReturn(Integer.MAX_VALUE);
         when(gear.getTotalCapacity()).thenReturn(Integer.MAX_VALUE);
         assertThrows(IllegalArgumentException.class, () -> service.createBooking(1L, friday,
-                Session.MORNING, 1, List.of(new BookingItemRequest(1L, Integer.MAX_VALUE),
+                Session.MORNING,  List.of(new BookingItemRequest(1L, Integer.MAX_VALUE),
                         new BookingItemRequest(2L, Integer.MAX_VALUE), new BookingItemRequest(3L, 3))));
     }
 
     @Test
     void rejectsNullItemAndOverflowingDuplicateQuantities() {
         assertThrows(IllegalArgumentException.class, () -> service.createBooking(1L, friday,
-                Session.MORNING, 1, Arrays.asList((BookingItemRequest) null)));
+                Session.MORNING,  Arrays.asList((BookingItemRequest) null)));
         assertThrows(IllegalArgumentException.class, () -> service.createBooking(1L, friday,
-                Session.MORNING, 1, List.of(new BookingItemRequest(1L, Integer.MAX_VALUE),
+                Session.MORNING, List.of(new BookingItemRequest(1L, Integer.MAX_VALUE),
                         new BookingItemRequest(1L, Integer.MAX_VALUE))));
     }
 
@@ -120,7 +120,7 @@ class BookingServiceTest {
     void fullDayNeedsBothHalvesButMorningDoesNotConsumeEvening() {
         when(items.findUsage(any(), any(), any())).thenReturn(List.of(
                 new ResourceUsage(1L, friday, Session.MORNING, BookingStatus.PENDING, 10L)));
-        var availability = service.findAvailability(1, request(1), friday, friday);
+        var availability = service.findAvailability(request(1), friday, friday);
         assertEquals(3, availability.size());
         assertFalse(availability.get(0).available());
         assertTrue(availability.get(1).available());
@@ -133,7 +133,7 @@ class BookingServiceTest {
         when(clock.instant()).thenReturn(Session.FULL_DAY.startAt(friday).toInstant());
         when(items.findUsage(any(), any(), any())).thenReturn(List.of(
                 new ResourceUsage(1L, friday, Session.FULL_DAY, BookingStatus.PENDING, 10L)));
-        var availability = service.findAvailability(1, request(1), friday, friday);
+        var availability = service.findAvailability( request(1), friday, friday);
         assertEquals(1, availability.size());
         assertEquals(Session.EVENING, availability.getFirst().session());
         assertTrue(availability.getFirst().available());
@@ -144,7 +144,7 @@ class BookingServiceTest {
         when(clock.instant()).thenReturn(Session.FULL_DAY.startAt(friday).toInstant());
         when(items.findUsage(any(), any(), any())).thenReturn(List.of(
                 new ResourceUsage(1L, friday, Session.FULL_DAY, BookingStatus.CONFIRMED, 10L)));
-        assertFalse(service.findAvailability(1, request(1), friday, friday).getFirst().available());
+        assertFalse(service.findAvailability(request(1), friday, friday).getFirst().available());
     }
 
     @Test
@@ -172,7 +172,6 @@ class BookingServiceTest {
             assertEquals(friday.plusDays(1), booking.getDate());
             assertEquals(confirmed ? BookingStatus.CONFIRMED : BookingStatus.PENDING, booking.getStatus());
             assertEquals(Session.MORNING, booking.getSession());
-            assertEquals(1, booking.getNumberOfPeople());
             assertEquals(originalItems, booking.getItems());
             assertEquals(originalPrice, booking.totalPrice());
         }
@@ -195,12 +194,12 @@ class BookingServiceTest {
     @Test
     void closedDatesStartedSessionsAndTicketMismatchAreRejected() {
         assertThrows(IllegalArgumentException.class,
-                () -> service.createBooking(1L, friday.plusDays(3), Session.MORNING, 1, request(1)));
+                () -> service.createBooking(1L, friday.plusDays(3), Session.MORNING, request(1)));
         assertThrows(IllegalArgumentException.class,
-                () -> service.createBooking(1L, friday, Session.MORNING, 2, request(1)));
+                () -> service.createBooking(1L, friday, Session.MORNING, request(1)));
         when(clock.instant()).thenReturn(Session.MORNING.startAt(friday).toInstant());
         assertThrows(IllegalArgumentException.class,
-                () -> service.createBooking(1L, friday, Session.MORNING, 1, request(1)));
+                () -> service.createBooking(1L, friday, Session.MORNING, request(1)));
     }
 
     @Test
@@ -240,7 +239,7 @@ class BookingServiceTest {
                 () -> service.rescheduleMyBooking(7L, 1L, friday.plusDays(1)));
         when(items.findUsage(any(), any(), any())).thenReturn(List.of(
                 new ResourceUsage(1L, friday, Session.FULL_DAY, BookingStatus.REJECTED, 10L)));
-        assertTrue(service.findAvailability(1, request(1), friday, friday).stream().allMatch(slot -> slot.available()));
+        assertTrue(service.findAvailability(request(1), friday, friday).stream().allMatch(slot -> slot.available()));
     }
 
     @Test
@@ -260,21 +259,21 @@ class BookingServiceTest {
 
     @Test
     void browsingOmitsClosedDaysAndValidatesRangeAndResources() {
-        assertEquals(9, service.findAvailability(1, request(1), friday, friday.plusDays(6)).size());
+        assertEquals(9, service.findAvailability( request(1), friday, friday.plusDays(6)).size());
         assertThrows(IllegalArgumentException.class,
-                () -> service.findAvailability(1, request(1), friday, friday.minusDays(1)));
+                () -> service.findAvailability( request(1), friday, friday.minusDays(1)));
         assertThrows(IllegalArgumentException.class,
-                () -> service.findAvailability(1, request(1), friday, friday.plusDays(120)));
+                () -> service.findAvailability( request(1), friday, friday.plusDays(120)));
         when(ticket.isActive()).thenReturn(false);
         assertThrows(IllegalArgumentException.class,
-                () -> service.createBooking(1L, friday, Session.MORNING, 1, request(1)));
+                () -> service.createBooking(1L, friday, Session.MORNING,  request(1)));
         when(resources.findAllById(any())).thenReturn(List.of());
         assertThrows(jakarta.persistence.EntityNotFoundException.class,
-                () -> service.findAvailability(1, request(1), friday, friday));
+                () -> service.findAvailability( request(1), friday, friday));
     }
 
     private Booking ownedBooking(boolean confirmed) {
-        Booking booking = new Booking(user, friday, Session.MORNING, 1);
+        Booking booking = new Booking(user, friday, Session.MORNING);
         booking.addItem(ticket, 1);
         if (confirmed) booking.confirm(clock);
         when(bookings.findByIdAndUserIdWithItems(7L, 1L)).thenReturn(Optional.of(booking));

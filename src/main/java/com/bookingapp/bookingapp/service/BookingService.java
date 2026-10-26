@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * User-facing booking operations. Every method acts on behalf of ONE user:
  * the caller's id must come from the authenticated principal, never from a request body.
  * Admin operations belong in a separate AdminBookingService.
- *
+ * <p>
  * Capacity is derived: for a date, usage of a resource in a half-day is the sum of quantities
  * of active holds whose session covers that half-day. Rejected, dropped and completed
  * bookings do not count. See Booking.holdsCapacity.
@@ -96,17 +96,14 @@ public class BookingService {
      * date in the range, whether it fits, and the price. Sessions that have already started are
      * left out. Nothing is locked here; the booking itself re-checks under lock.
      */
-    public List<SessionAvailability> findAvailability(Integer numberOfPeople,
-                                                      List<BookingItemRequest> requestedItems,
+    public List<SessionAvailability> findAvailability(List<BookingItemRequest> requestedItems,
                                                       LocalDate fromDate, LocalDate toDate) {
-        validateNumberOfPeople(numberOfPeople);
         validateDateRange(fromDate, toDate);
         Map<Long, Integer> quantities = mergeAndValidateItems(requestedItems);
-
         Map<Long, BookableResource> resources =
                 indexById(bookableResourceRepository.findAllById(quantities.keySet()));
         requireBookable(quantities.keySet(), resources);
-        requireOneTicketPerPerson(quantities, resources, numberOfPeople);
+        requireTickets(quantities, resources);
 
         List<ResourceUsage> rows = bookingItemRepository.findUsage(quantities.keySet(), fromDate, toDate);
         Instant now = clock.instant();
@@ -136,10 +133,7 @@ public class BookingService {
      * whoever held the lock before us, to any database (MySQL defaults to REPEATABLE READ).
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public Booking createBooking(Long userId, LocalDate date, Session session,
-                                 Integer numberOfPeople, List<BookingItemRequest> requestedItems) {
-
-        validateNumberOfPeople(numberOfPeople);
+    public Booking createBooking(Long userId, LocalDate date, Session session, List<BookingItemRequest> requestedItems) {
         requireBookableSlot(date, session);
         Map<Long, Integer> quantities = mergeAndValidateItems(requestedItems);
 
@@ -147,7 +141,7 @@ public class BookingService {
         Map<Long, BookableResource> resources =
                 indexById(bookableResourceRepository.findAllByIdWithLock(quantities.keySet()));
         requireBookable(quantities.keySet(), resources);
-        requireOneTicketPerPerson(quantities, resources, numberOfPeople);
+        requireTickets(quantities, resources);
 
         Map<UsageKey, Long> usage = toHalfDayUsage(
                 bookingItemRepository.findUsage(quantities.keySet(), date, date), clock.instant());
@@ -158,7 +152,7 @@ public class BookingService {
 
         // Waiting for locks or database reads may have crossed the session start.
         requireBookableSlot(date, session);
-        Booking booking = new Booking(user, date, session, numberOfPeople);
+        Booking booking = new Booking(user, date, session);
         quantities.forEach((resourceId, quantity) -> booking.addItem(resources.get(resourceId), quantity));
         return bookingRepository.save(booking);
     }
@@ -192,6 +186,7 @@ public class BookingService {
         Map<Long, BookableResource> resources =
                 indexById(bookableResourceRepository.findAllByIdWithLock(quantities.keySet()));
 
+        requireBookable(quantities.keySet(), resources);
         // This booking's own current hold must not count against its new date.
         Map<UsageKey, Long> usage = toHalfDayUsage(bookingItemRepository.findUsageExcludingBooking(
                 quantities.keySet(), newDate, newDate, booking.getId()), clock.instant());
@@ -302,19 +297,6 @@ public class BookingService {
         }
     }
 
-    private void requireOneTicketPerPerson(Map<Long, Integer> quantities,
-                                           Map<Long, BookableResource> resources,
-                                           int numberOfPeople) {
-        long tickets = quantities.entrySet().stream()
-                .filter(e -> resources.get(e.getKey()).getType() == ResourceType.TICKET)
-                .mapToLong(Map.Entry::getValue)
-                .sum();
-        if (tickets != numberOfPeople) {
-            throw new IllegalArgumentException("Each person needs exactly one ticket: expected "
-                    + numberOfPeople + " but got " + tickets);
-        }
-    }
-
     // ---------- Validation helpers ----------
 
     private Map<Long, BookableResource> indexById(List<BookableResource> resources) {
@@ -371,9 +353,11 @@ public class BookingService {
         }
     }
 
-    private void validateNumberOfPeople(Integer numberOfPeople) {
-        if (numberOfPeople == null || numberOfPeople <= 0) {
-            throw new IllegalArgumentException("Number of people must be greater than zero");
+    private void requireTickets(Map<Long, Integer> quantities, Map<Long, BookableResource> resources) {
+        boolean hasTicket = quantities.keySet().stream()
+                .anyMatch(id -> resources.get(id).getType() == ResourceType.TICKET);
+        if (!hasTicket) {
+            throw new IllegalArgumentException("A booking must contain at least one ticket");
         }
     }
 }

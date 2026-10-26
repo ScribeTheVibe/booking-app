@@ -13,6 +13,5 @@ import java.util.List;
 public record CreateBookingRequest(
         @NotNull LocalDate date,
         @NotNull Session session,
-        @NotNull @Positive Integer numberOfPeople,
         @NotEmpty List<@Valid BookingItemRequest> items) {
 }
