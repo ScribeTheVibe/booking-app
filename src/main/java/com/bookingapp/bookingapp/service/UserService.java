@@ -2,14 +2,19 @@ package com.bookingapp.bookingapp.service;
 
 import com.bookingapp.bookingapp.dto.RegisterUserRequest;
 import com.bookingapp.bookingapp.dto.UpdateUserRequest;
+import com.bookingapp.bookingapp.entity.Booking;
 import com.bookingapp.bookingapp.entity.BookingStatus;
 import com.bookingapp.bookingapp.entity.User;
 import com.bookingapp.bookingapp.exception.*;
+import com.bookingapp.bookingapp.repository.BookingRepository;
 import com.bookingapp.bookingapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.List;
 import java.util.Locale;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -19,6 +24,7 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BookingRepository bookingRepository;
     private String normalizeEmail(String email){
         return email.trim().toLowerCase(Locale.ROOT);
     }
@@ -81,10 +87,9 @@ public class UserService {
             throw new DuplicateFieldException("phone", request.phone());
         }
 
-        user.setFirstName(request.firstName());
-        user.setLastName(request.lastName());
-        user.setEmail(email);
-        user.setPhone(request.phone());
+        user.changeName(request.firstName(), request.lastName());
+        user.changeEmail(email);
+        user.changePhone(request.phone());
 
         return userRepository.save(user);
     }
@@ -95,21 +100,7 @@ public class UserService {
             throw new UnauthorizedActionException("You can only delete your own account");
         }
         User user = getUserById(id);
-
-        LocalDateTime now = LocalDateTime.now();
-
-        user.getBookings().stream()
-                .filter(b -> b.getStartTime().isAfter(now))
-                .filter(b -> b.getStatus() != BookingStatus.CANCELLED)
-                .forEach(booking -> {
-                    booking.setStatus(BookingStatus.CANCELLED);
-                    booking.getItems().forEach(item ->{
-                        var resource = item.getBookableResource();
-                        resource.setAvailableUnits(resource.getAvailableUnits() + item.getQuantity());
-                    });
-                });
-        user.markDeleted(now);
-        userRepository.save(user);
+        user.markDeleted(Instant.now());
     }
 
 
