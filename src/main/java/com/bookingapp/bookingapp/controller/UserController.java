@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final CurrentUserProvider currentUser;
 
     @GetMapping("/{id}")
     public UserResponse getUser(@PathVariable Long id){
@@ -24,24 +25,23 @@ public class UserController {
 
     @PostMapping("/{id}")
     public UserResponse update(@PathVariable Long id,
-                               @Valid @RequestBody UpdateUserRequest request, Long requestingUserId){
-        User updated = userService.updateUser(id, requestingUserId, request);
+                               @Valid @RequestBody UpdateUserRequest request){
+        User updated = userService.updateUser(id, currentUser.requireUserId(), request);
         return UserResponse.from(updated);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id,
-                               Long requestingUserId){
-        userService.softDeleteUser(id, requestingUserId);
+    public void delete(@PathVariable Long id){
+        userService.softDeleteUser(id, currentUser.requireUserId());
     }
 
     @PutMapping("/{id}/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changePassword(@PathVariable Long id,
-                               @Valid @RequestBody ChangePasswordRequest request,
-                               Long requestingUserId){
-        userService.changePassword(id, requestingUserId, request.currentPassword(), request.newPassword());
+                               @Valid @RequestBody ChangePasswordRequest request){
+        userService.changePassword(id, currentUser.requireUserId(), request.currentPassword(),
+                request.newPassword());
     }
 
 }
