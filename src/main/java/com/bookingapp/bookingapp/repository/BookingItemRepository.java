@@ -2,6 +2,8 @@ package com.bookingapp.bookingapp.repository;
 
 import com.bookingapp.bookingapp.dto.ResourceUsage;
 import com.bookingapp.bookingapp.entity.BookingItem;
+import com.bookingapp.bookingapp.entity.BookingStatus;
+import com.bookingapp.bookingapp.entity.Session;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,7 +15,7 @@ import java.util.List;
 public interface BookingItemRepository extends JpaRepository<BookingItem, Long> {
 
     /**
-     * Booked units per resource, date, session and status for the given dates (inclusive).
+     * Booked units per resource, date, session, and status for the given dates (inclusive).
      * Only pending and confirmed decisions can hold capacity. The caller additionally
      * filters time-derived dropped and completed states at a consistent instant.
      */
@@ -49,4 +51,22 @@ public interface BookingItemRepository extends JpaRepository<BookingItem, Long> 
                                                   @Param("fromDate") LocalDate fromDate,
                                                   @Param("toDate") LocalDate toDate,
                                                   @Param("excludeBookingId") Long excludeBookingId);
+
+    interface SessionUsage {
+        LocalDate getSessionDate();
+        Session getSession();
+        Long getQuantity();
+    }
+
+    @Query("""
+    SELECT b.date AS date, b.session AS session, SUM(i.quantity) AS quantity
+    FROM BookingItem i JOIN i.booking b
+    WHERE i.resource.id = :resourceId
+      AND b.date >= :from
+      AND b.status IN :statuses
+    GROUP BY b.date, b.session
+    """)
+    List<SessionUsage> findUsageBySession(@Param("resourceId") Long resourceId,
+                                          @Param("from") LocalDate from,
+                                          @Param("statuses") Collection<BookingStatus> statuses);
 }

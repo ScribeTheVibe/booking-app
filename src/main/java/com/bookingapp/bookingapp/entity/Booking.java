@@ -228,7 +228,7 @@ public class Booking {
 
     private static void requireOpenDay(LocalDate date) {
         if (date == null) throw new IllegalArgumentException("Date is required");
-        if (!ResortTime.isOpenDay(date)) {
+        if (ResortTime.isOpenDay(date)) {
             throw new IllegalArgumentException("The resort is only open Friday to Sunday");
         }
     }
