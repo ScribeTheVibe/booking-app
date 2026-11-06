@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Locale;
 
 /**
@@ -14,6 +16,7 @@ import java.util.Locale;
  */
 @Entity
 @Table(name = "users")
+@SQLRestriction("deleted_at is NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
@@ -42,6 +45,9 @@ public class User {
 
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     @Version
     private Long version;
@@ -102,5 +108,11 @@ public class User {
     @Override
     public int hashCode() {
         return User.class.hashCode();
+    }
+
+    public void markDeleted(Instant now){
+        this.deletedAt = now;
+        this.email = "deleted" + id + "_" +email;
+        this.phone = "deleted" + id;
     }
 }
