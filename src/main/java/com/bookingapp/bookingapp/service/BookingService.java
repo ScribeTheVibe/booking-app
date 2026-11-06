@@ -112,7 +112,7 @@ public class BookingService {
 
         List<SessionAvailability> result = new ArrayList<>();
         for (LocalDate date = fromDate; !date.isAfter(toDate); date = date.plusDays(1)) {
-            if (!ResortTime.isOpenDay(date)) {
+            if (ResortTime.isOpenDay(date)) {
                 continue;
             }
             for (Session session : Session.values()) {
@@ -273,7 +273,7 @@ public class BookingService {
         if (session == null) {
             throw new IllegalArgumentException("Session is required");
         }
-        if (!ResortTime.isOpenDay(date)) {
+        if (ResortTime.isOpenDay(date)) {
             throw new IllegalArgumentException("The resort is only open Friday to Sunday");
         }
         if (hasStarted(date, session, clock.instant())) {

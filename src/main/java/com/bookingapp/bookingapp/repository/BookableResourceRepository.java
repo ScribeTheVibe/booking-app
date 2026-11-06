@@ -9,8 +9,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
-public interface BookableResourceRepository extends JpaRepository<BookableResource, Long> {
+public interface  BookableResourceRepository extends JpaRepository<BookableResource, Long> {
 
     /** Everything a customer can currently book, in a stable order for the UI. */
     List<BookableResource> findByActiveTrueOrderByTypeAscNameAsc();
@@ -24,4 +25,8 @@ public interface BookableResourceRepository extends JpaRepository<BookableResour
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM BookableResource r WHERE r.id IN :ids ORDER BY r.id")
     List<BookableResource> findAllByIdWithLock(@Param("ids") Collection<Long> ids);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM BookableResource r WHERE r.id = :id")
+    Optional<BookableResource> findByIdWithLock(@Param("id") Long id);
 }

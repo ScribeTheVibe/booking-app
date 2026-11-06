@@ -15,12 +15,12 @@ public final class ResortTime {
     public static final ZoneId ZONE = ZoneId.of("Europe/Vilnius");
 
     private static final Set<DayOfWeek> OPEN_DAYS =
-            EnumSet.of(DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
+            EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
 
     private ResortTime() {
     }
 
     public static boolean isOpenDay(LocalDate date) {
-        return OPEN_DAYS.contains(date.getDayOfWeek());
+        return !OPEN_DAYS.contains(date.getDayOfWeek());
     }
 }

@@ -36,7 +36,7 @@ public class BookableResource {
     private BigDecimal unitPrice;
 
     @Column(name = "total_capacity", nullable = false)
-    private Integer totalCapacity;
+    private int totalCapacity;
 
     @Column(nullable = false)
     private boolean active = true;
@@ -55,15 +55,15 @@ public class BookableResource {
         if (type == null) {
             throw new IllegalArgumentException("Resource type is required");
         }
-        this.name = requireText(name, "Resource name");
+        this.name = requireText(name);
         this.description = description;
         this.type = type;
-        this.unitPrice = requireNonNegative(unitPrice, "Unit price");
-        this.totalCapacity = requireNonNegative(totalCapacity, "Total capacity");
+        this.unitPrice = requireNonNegative(unitPrice);
+        this.totalCapacity = requireNonNegative(totalCapacity);
     }
 
     public void rename(String newName) {
-        this.name = requireText(newName, "Resource name");
+        this.name = requireText(newName);
     }
 
     public void changeDescription(String newDescription) {
@@ -71,11 +71,11 @@ public class BookableResource {
     }
 
     public void changeUnitPrice(BigDecimal newPrice) {
-        this.unitPrice = requireNonNegative(newPrice, "Unit price");
+        this.unitPrice = requireNonNegative(newPrice);
     }
 
     public void changeTotalCapacity(int newCapacity) {
-        this.totalCapacity = requireNonNegative(newCapacity, "Total capacity");
+        this.totalCapacity = requireNonNegative(newCapacity);
     }
 
     public void activate() {
@@ -96,23 +96,23 @@ public class BookableResource {
         updatedAt = Instant.now();
     }
 
-    private static String requireText(String value, String label) {
+    private static String requireText(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(label + " is required");
+            throw new IllegalArgumentException("Resource name" + " is required");
         }
         return value.trim();
     }
 
-    private static BigDecimal requireNonNegative(BigDecimal value, String label) {
+    private static BigDecimal requireNonNegative(BigDecimal value) {
         if (value == null || value.signum() < 0) {
-            throw new IllegalArgumentException(label + " must be zero or greater");
+            throw new IllegalArgumentException("Unit price" + " must be zero or greater");
         }
         return value;
     }
 
-    private static int requireNonNegative(int value, String label) {
+    private static int requireNonNegative(int value) {
         if (value < 0) {
-            throw new IllegalArgumentException(label + " must be zero or greater");
+            throw new IllegalArgumentException("Total capacity" + " must be zero or greater");
         }
         return value;
     }
