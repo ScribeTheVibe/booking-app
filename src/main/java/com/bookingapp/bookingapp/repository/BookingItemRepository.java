@@ -19,6 +19,9 @@ public interface BookingItemRepository extends JpaRepository<BookingItem, Long> 
      * Only pending and confirmed decisions can hold capacity. The caller additionally
      * filters time-derived dropped and completed states at a consistent instant.
      */
+
+    boolean existsByResourceId(Long resourceId);
+
     @Query("""
             SELECT new com.bookingapp.bookingapp.dto.ResourceUsage(
                 bi.resource.id, b.date, b.session, b.status, SUM(bi.quantity))
