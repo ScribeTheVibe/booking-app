@@ -63,8 +63,8 @@ public class BookingService {
     private final UserRepository userRepository;
     private final BookableResourceRepository bookableResourceRepository;
     private final BookingItemRepository bookingItemRepository;
-    private final SettingRepository settingRepository;
     private final Clock clock;
+    private final SettingService settingService;
 
     /** Booked units of one resource in one half-day of one date. */
     private record UsageKey(Long resourceId, LocalDate date, HalfDay halfDay) {
@@ -274,7 +274,7 @@ public class BookingService {
             throw new IllegalArgumentException("Session is required");
         }
         if (ResortTime.isOpenDay(date)) {
-            throw new IllegalArgumentException("The resort is only open Friday to Sunday");
+            throw new IllegalArgumentException("The resort is only open Saturday to Sunday");
         }
         if (hasStarted(date, session, clock.instant())) {
             throw new IllegalArgumentException("This session has already started");
@@ -283,10 +283,7 @@ public class BookingService {
 
     /** Allowed only before (original session start minus the admin-set number of hours). */
     private void requireBeforeRescheduleDeadline(Booking booking) {
-        int hours = settingRepository.findById(Setting.RESCHEDULE_DEADLINE_HOURS)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Missing setting: " + Setting.RESCHEDULE_DEADLINE_HOURS))
-                .asInt();
+        int hours = settingService.getRescheduleDeadlineHours();
         if (hours < 0) {
             throw new IllegalStateException(Setting.RESCHEDULE_DEADLINE_HOURS + " must not be negative");
         }
