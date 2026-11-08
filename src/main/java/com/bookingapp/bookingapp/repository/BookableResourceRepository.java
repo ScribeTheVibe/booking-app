@@ -1,6 +1,7 @@
 package com.bookingapp.bookingapp.repository;
 
 import com.bookingapp.bookingapp.entity.BookableResource;
+import com.bookingapp.bookingapp.entity.ResourceType;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -15,6 +16,18 @@ public interface  BookableResourceRepository extends JpaRepository<BookableResou
 
     /** Everything a customer can currently book, in a stable order for the UI. */
     List<BookableResource> findByActiveTrueOrderByTypeAscNameAsc();
+
+    List<BookableResource> findByActiveFalseOrderByTypeAscNameAsc();
+
+    List<BookableResource> findAllByOrderByTypeAscNameAsc();
+
+    boolean existsByTypeAndNameIgnoreCase(ResourceType type, String name);
+
+    boolean existsByTypeAndNameIgnoreCaseAndIdNot(
+            ResourceType type,
+            String name,
+            Long id
+    );
 
     /**
      * Locks the given resources for the rest of the transaction, in ascending id order

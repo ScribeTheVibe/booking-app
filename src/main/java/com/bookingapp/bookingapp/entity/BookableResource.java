@@ -13,7 +13,18 @@ import java.time.Instant;
  * Capacity is the same for every date.
  */
 @Entity
-@Table(name = "bookable_resources", check = @CheckConstraint(constraint = "total_capacity >= 0 AND unit_price >= 0"))
+@Table(
+        name = "bookable_resources",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_bookable_resources_type_name",
+                        columnNames = {"type", "name"}
+                )
+        },
+        check = @CheckConstraint(
+                constraint = "total_capacity >= 0 AND unit_price >= 0"
+        )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BookableResource {
@@ -76,6 +87,13 @@ public class BookableResource {
 
     public void changeTotalCapacity(int newCapacity) {
         this.totalCapacity = requireNonNegative(newCapacity);
+    }
+
+    public void changeType(ResourceType newType) {
+        if (newType == null) {
+            throw new IllegalArgumentException("Resource type is required");
+        }
+        this.type = newType;
     }
 
     public void activate() {
