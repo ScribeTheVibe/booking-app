@@ -18,29 +18,27 @@ public class UserController {
     private final UserService userService;
     private final CurrentUserProvider currentUser;
 
-    @GetMapping("/{id}")
-    public UserResponse getUser(@PathVariable Long id){
-        return UserResponse.from(userService.getUserById(id));
+    @GetMapping("/me")
+    public UserResponse me(){
+        return UserResponse.from(userService.getUserById(currentUser.requireUserId()));
     }
 
-    @PostMapping("/{id}")
-    public UserResponse update(@PathVariable Long id,
-                               @Valid @RequestBody UpdateUserRequest request){
-        User updated = userService.updateUser(id, currentUser.requireUserId(), request);
+    @PutMapping("/me")
+    public UserResponse update(@Valid @RequestBody UpdateUserRequest request){
+        User updated = userService.updateUser(currentUser.requireUserId(), request);
         return UserResponse.from(updated);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id){
-        userService.softDeleteUser(id, currentUser.requireUserId());
+    public void delete(){
+        userService.softDeleteUser(currentUser.requireUserId());
     }
 
-    @PutMapping("/{id}/password")
+    @PutMapping("/me/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changePassword(@PathVariable Long id,
-                               @Valid @RequestBody ChangePasswordRequest request){
-        userService.changePassword(id, currentUser.requireUserId(), request.currentPassword(),
+    public void changePassword(@Valid @RequestBody ChangePasswordRequest request){
+        userService.changePassword(currentUser.requireUserId(), request.currentPassword(),
                 request.newPassword());
     }
 

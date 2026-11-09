@@ -2,8 +2,6 @@ package com.bookingapp.bookingapp.service;
 
 import com.bookingapp.bookingapp.dto.RegisterUserRequest;
 import com.bookingapp.bookingapp.dto.UpdateUserRequest;
-import com.bookingapp.bookingapp.entity.Booking;
-import com.bookingapp.bookingapp.entity.BookingStatus;
 import com.bookingapp.bookingapp.entity.User;
 import com.bookingapp.bookingapp.exception.*;
 import com.bookingapp.bookingapp.repository.BookingRepository;
@@ -14,9 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Locale;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -71,11 +67,7 @@ public class UserService {
 
 
     @Transactional
-    public User updateUser(Long id, Long requestingUserId, UpdateUserRequest request){
-        if(!id.equals(requestingUserId)){
-            throw new UnauthorizedActionException("You can only update your own account");
-        }
-
+    public User updateUser(Long id,  UpdateUserRequest request){
         String email = normalizeEmail(request.email());
         User user = getUserById(id);
 
@@ -95,10 +87,7 @@ public class UserService {
     }
 
     @Transactional
-    public void softDeleteUser(Long id, Long requestingUserId){
-        if(!id.equals(requestingUserId)){
-            throw new UnauthorizedActionException("You can only delete your own account");
-        }
+    public void softDeleteUser(Long id){
         User user = getUserById(id);
         user.markDeleted(Instant.now());
     }
@@ -116,10 +105,7 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(Long id, Long requestingUserId, String currentPassword, String newPassword){
-        if(!id.equals(requestingUserId)){
-            throw new UnauthorizedActionException("You can only change your own password");
-        }
+    public void changePassword(Long id, String currentPassword, String newPassword){
         User user = getUserById(id);
 
         if(!passwordEncoder.matches(currentPassword, user.getPasswordHash())){
