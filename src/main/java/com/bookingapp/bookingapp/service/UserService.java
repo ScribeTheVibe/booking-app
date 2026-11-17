@@ -64,6 +64,7 @@ public class UserService {
 
         if (email.equals(adminEmail)) {
             user.promoteToAdmin();
+            user.incrementTokenVersion();
         }
 
         return userRepository.save(user);
@@ -100,6 +101,7 @@ public class UserService {
     @Transactional
     public void softDeleteUser(Long id){
         User user = getUserById(id);
+        user.incrementTokenVersion();
         user.markDeleted(Instant.now());
     }
 
@@ -116,6 +118,7 @@ public class UserService {
 
         if (normalizedEmail.equals(adminEmail) && !user.isAdmin()) {
             user.promoteToAdmin();
+            user.incrementTokenVersion();
         }
 
         return user;
@@ -128,6 +131,7 @@ public class UserService {
         if(!passwordEncoder.matches(currentPassword, user.getPasswordHash())){
             throw new InvalidUserCredentialException("Current password is incorrect");
         }
+        user.incrementTokenVersion();
         user.changePasswordHash(passwordEncoder.encode(newPassword));
     }
 

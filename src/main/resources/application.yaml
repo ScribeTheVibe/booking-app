@@ -15,5 +15,7 @@ app:
   jwt:
     secret: dev-only-secret-change-me-0123456789abcdef
     expiration-minutes: 30
+    issuer: booking-app
+    audience: booking-app-api
   admin:
     email: admin@example.com

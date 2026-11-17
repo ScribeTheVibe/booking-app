@@ -12,5 +12,7 @@ app:
   jwt:
     secret: test-secret-key-for-jwt-signing-0123456789abcdef
     expiration-minutes: 30
+    issuer: booking-app
+    audience: booking-app-api
   admin:
     email: admin@example.com
