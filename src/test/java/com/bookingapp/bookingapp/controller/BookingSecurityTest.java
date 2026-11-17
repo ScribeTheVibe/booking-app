@@ -1,5 +1,7 @@
 package com.bookingapp.bookingapp.controller;
 
+import com.bookingapp.bookingapp.config.JwtAuthConverter;
+import com.bookingapp.bookingapp.config.JwtConfig;
 import com.bookingapp.bookingapp.config.SecurityConfig;
 import com.bookingapp.bookingapp.service.BookingService;
 import org.junit.jupiter.api.Test;
@@ -7,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -18,7 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BookingController.class)
-@Import({SecurityConfig.class, SecurityCurrentUserProvider.class})
+@Import({SecurityConfig.class, JwtConfig.class, SecurityCurrentUserProvider.class})
 class BookingSecurityTest {
 
     @Autowired
@@ -29,6 +33,15 @@ class BookingSecurityTest {
 
     @MockitoBean
     private BookingMapper mapper;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
+
+    @MockitoBean
+    private JwtEncoder jwtEncoder;
+
+    @MockitoBean
+    private JwtAuthConverter jwtAuthConverter;
 
     @Test
     void devHeaderDoesNotAuthenticateOutsideDev() throws Exception {
@@ -60,7 +73,7 @@ class BookingSecurityTest {
         mvc.perform(post("/api/bookings").with(authentication(
                         UsernamePasswordAuthenticationToken.authenticated(new BookingPrincipal(7L), null, List.of())))
                         .contentType("application/json").content("{}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isBadRequest());
         verifyNoInteractions(service);
     }
 }

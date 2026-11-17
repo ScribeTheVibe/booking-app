@@ -23,7 +23,12 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         }
         try {
             Long userId = Long.valueOf(jwt.getSubject());
-            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+            List<GrantedAuthority> authorities = new java.util.ArrayList<>();
+            authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+            Boolean isAdmin = jwt.getClaim("admin");
+            if (Boolean.TRUE.equals(isAdmin)) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            }
             return UsernamePasswordAuthenticationToken.authenticated(
                     new BookingPrincipal(userId), jwt, authorities);
         } catch (IllegalArgumentException e) {

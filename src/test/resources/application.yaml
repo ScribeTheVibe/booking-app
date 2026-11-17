@@ -7,3 +7,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+app:
+  jwt:
+    secret: test-secret-key-for-jwt-signing-0123456789abcdef
+    expiration-minutes: 30
+  admin:
+    email: admin@example.com

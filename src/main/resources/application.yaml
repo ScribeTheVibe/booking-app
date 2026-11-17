@@ -1,6 +1,4 @@
 spring:
-  profiles:
-    active: dev
   application:
     name: booking-app
   datasource:
@@ -15,5 +13,7 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: dev-only-secret-change-me-0123456789abcdef
     expiration-minutes: 30
+  admin:
+    email: admin@example.com

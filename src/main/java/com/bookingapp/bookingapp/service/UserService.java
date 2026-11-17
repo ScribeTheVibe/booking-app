@@ -6,7 +6,7 @@ import com.bookingapp.bookingapp.entity.User;
 import com.bookingapp.bookingapp.exception.*;
 import com.bookingapp.bookingapp.repository.BookingRepository;
 import com.bookingapp.bookingapp.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +16,18 @@ import java.util.Locale;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final BookingRepository bookingRepository;
+    private final String adminEmail;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       @Value("${app.admin.email:}") String adminEmail){
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.adminEmail = normalizeEmail(adminEmail);
+    }
+
     private String normalizeEmail(String email){
         return email.trim().toLowerCase(Locale.ROOT);
     }
@@ -54,6 +61,10 @@ public class UserService {
                 email,
                 request.phone()
         );
+
+        if (email.equals(adminEmail)) {
+            user.promoteToAdmin();
+        }
 
         return userRepository.save(user);
     }
@@ -93,6 +104,7 @@ public class UserService {
     }
 
 
+    @Transactional
     public User login(String email, String rawPassword){
         String normalizedEmail = normalizeEmail(email);
         User user = findUserByEmail(normalizedEmail)
@@ -101,6 +113,11 @@ public class UserService {
         if(!passwordEncoder.matches(rawPassword, user.getPasswordHash())){
             throw new InvalidUserCredentialException("Invalid email or password");
         }
+
+        if (normalizedEmail.equals(adminEmail) && !user.isAdmin()) {
+            user.promoteToAdmin();
+        }
+
         return user;
     }
 

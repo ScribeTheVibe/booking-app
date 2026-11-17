@@ -40,6 +40,9 @@ public class User {
     @Column(name = "phone", nullable = false, unique = true, length = 30)
     private String phone;
 
+    @Column(name = "admin", nullable = false)
+    private boolean admin = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -75,6 +78,10 @@ public class User {
 
     public void changePasswordHash(String newPasswordHash) {
         this.passwordHash = requireText(newPasswordHash, "Password hash");
+    }
+
+    public void promoteToAdmin() {
+        this.admin = true;
     }
 
     @PrePersist

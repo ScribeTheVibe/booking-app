@@ -20,7 +20,7 @@ public class JwtConfig {
     @Bean
     SecretKey jwtSecretKey(@Value("${app.jwt.secret}") String secret) {
         byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
-        if(bytes.length > 32){
+        if(bytes.length < 32){
             throw new IllegalStateException("app.jwt.secret must be at least 32 bytes");
         }
     return new SecretKeySpec(bytes, "HmacSHA256");

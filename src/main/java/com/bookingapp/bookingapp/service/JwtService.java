@@ -28,12 +28,15 @@ public class JwtService {
 
     public String generateToken(User user){
         Instant now = clock.instant();
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
                 .issuer("booking-app")
                 .issuedAt(now)
                 .expiresAt(now.plus(lifetime))
-                .subject(user.getId().toString())
-                .build();
+                .subject(user.getId().toString());
+        if (user.isAdmin()) {
+            builder.claim("admin", true);
+        }
+        JwtClaimsSet claims = builder.build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }
