@@ -27,6 +27,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Profile("!dev")
     SecurityFilterChain security(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -37,6 +38,19 @@ public class SecurityConfig {
                         .anyRequest().authenticated())                 // everything else: needs a token
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)))
+                .build();
+    }
+
+    /**https://chatgpt.com/c/6afdb6a5-2da4-83ed-9400-67374acbd9e9?temporary-chat=true
+     * Dev-profile security filter chain: permits all requests so that the
+     * X-Dev-User-Id header authentication in DevHeaderCurrentUserProvider works.
+     */
+    @Bean
+    @Profile("dev")
+    SecurityFilterChain devSecurity(HttpSecurity http) throws Exception {
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .build();
     }
 }

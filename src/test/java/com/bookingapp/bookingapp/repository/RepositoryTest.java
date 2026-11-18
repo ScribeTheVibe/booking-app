@@ -90,7 +90,7 @@ class RepositoryTest {
 
     @Test
     void bookingRepositoryAndItemRepositoryUsageAggregation() {
-        LocalDate bookingDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
+        LocalDate bookingDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.SATURDAY));
         Booking booking = new Booking(savedUser, bookingDate, Session.MORNING);
         booking.addItem(passResource, 2);
         booking.addItem(equipmentResource, 1);

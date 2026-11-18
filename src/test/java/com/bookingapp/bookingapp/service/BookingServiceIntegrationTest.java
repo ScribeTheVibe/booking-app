@@ -52,7 +52,7 @@ class BookingServiceIntegrationTest {
     @Autowired private PlatformTransactionManager transactionManager;
     @Autowired private Clock clock;
 
-    private final LocalDate friday = LocalDate.of(2026, 10, 23);
+    private final LocalDate saturday = LocalDate.of(2026, 10, 24);
     private Long userId;
     private Long ticketId;
 
@@ -60,69 +60,69 @@ class BookingServiceIntegrationTest {
     void setUp() {
         String unique = UUID.randomUUID().toString();
         userId = users.save(new User("Test", "User", "hash", unique + "@example.com", unique.substring(0, 24))).getId();
-        ticketId = resources.save(new BookableResource("Pass", "Ski pass", ResourceType.TICKET,
+        ticketId = resources.save(new BookableResource("Pass-" + unique, "Ski pass", ResourceType.TICKET,
                 new BigDecimal("25.00"), 1)).getId();
         settings.save(new Setting(Setting.RESCHEDULE_DEADLINE_HOURS, "24"));
     }
 
     @Test
     void fullDayUsesBothHalvesAndFailedMovePreservesPersistedBooking() {
-        Booking original = create(friday, Session.FULL_DAY);
-        create(friday.plusDays(1), Session.EVENING);
+        Booking original = create(saturday, Session.FULL_DAY);
+        create(saturday.plusDays(1), Session.EVENING);
         assertThrows(InsufficientAvailabilityException.class,
-                () -> create(friday, Session.MORNING));
+                () -> create(saturday, Session.MORNING));
         assertThrows(InsufficientAvailabilityException.class,
-                () -> create(friday, Session.EVENING));
+                () -> create(saturday, Session.EVENING));
         assertThrows(InsufficientAvailabilityException.class,
-                () -> service.rescheduleMyBooking(original.getId(), userId, friday.plusDays(1)));
+                () -> service.rescheduleMyBooking(original.getId(), userId, saturday.plusDays(1)));
         Booking unchanged = service.getMyBooking(original.getId(), userId);
-        assertEquals(friday, unchanged.getDate());
+        assertEquals(saturday, unchanged.getDate());
         assertEquals(BookingStatus.PENDING, unchanged.getStatus());
         assertEquals(new BigDecimal("25.00"), unchanged.totalPrice());
     }
 
     @Test
     void confirmedMoveReleasesOldSlotAndKeepsPriceSnapshot() {
-        Booking original = create(friday, Session.MORNING);
+        Booking original = create(saturday, Session.MORNING);
         new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
             bookings.findById(original.getId()).orElseThrow().confirm(clock);
             resources.findById(ticketId).orElseThrow().changeUnitPrice(new BigDecimal("99.00"));
         });
-        service.rescheduleMyBooking(original.getId(), userId, friday.plusDays(1));
+        service.rescheduleMyBooking(original.getId(), userId, saturday.plusDays(1));
         Booking moved = service.getMyBooking(original.getId(), userId);
-        assertEquals(friday.plusDays(1), moved.getDate());
+        assertEquals(saturday.plusDays(1), moved.getDate());
         assertEquals(BookingStatus.CONFIRMED, moved.getStatus());
         assertEquals(new BigDecimal("25.00"), moved.totalPrice());
-        assertEquals(new BigDecimal("99.00"), create(friday, Session.MORNING).totalPrice());
+        assertEquals(new BigDecimal("99.00"), create(saturday, Session.MORNING).totalPrice());
         assertThrows(InsufficientAvailabilityException.class,
-                () -> create(friday.plusDays(1), Session.MORNING));
+                () -> create(saturday.plusDays(1), Session.MORNING));
     }
 
     @Test
     void rejectionFreesCapacityInBothUsageQueries() {
-        Booking original = create(friday, Session.FULL_DAY);
+        Booking original = create(saturday, Session.FULL_DAY);
         new TransactionTemplate(transactionManager).executeWithoutResult(status ->
                 bookings.findById(original.getId()).orElseThrow().reject(clock));
-        assertTrue(items.findUsage(List.of(ticketId), friday, friday).isEmpty());
-        assertTrue(items.findUsageExcludingBooking(List.of(ticketId), friday, friday, -1L).isEmpty());
-        assertEquals(BookingStatus.PENDING, create(friday, Session.FULL_DAY).getStatus());
+        assertTrue(items.findUsage(List.of(ticketId), saturday, saturday).isEmpty());
+        assertTrue(items.findUsageExcludingBooking(List.of(ticketId), saturday, saturday, -1L).isEmpty());
+        assertEquals(BookingStatus.PENDING, create(saturday, Session.FULL_DAY).getStatus());
     }
 
     @Test
     void concurrentCreatesCannotOverbookLastUnit() throws Exception {
-        assertOneSuccess(() -> create(friday, Session.MORNING), () -> create(friday, Session.MORNING));
-        assertEquals(1L, items.findUsage(List.of(ticketId), friday, friday).getFirst().quantity());
+        assertOneSuccess(() -> create(saturday, Session.MORNING), () -> create(saturday, Session.MORNING));
+        assertEquals(1L, items.findUsage(List.of(ticketId), saturday, saturday).getFirst().quantity());
     }
 
     @Test
     void createAndRescheduleCompeteForSameLastUnit() throws Exception {
-        Booking original = create(friday, Session.MORNING);
-        LocalDate target = friday.plusDays(1);
+        Booking original = create(saturday, Session.MORNING);
+        LocalDate target = saturday.plusDays(1);
         assertOneSuccess(() -> create(target, Session.MORNING),
                 () -> service.rescheduleMyBooking(original.getId(), userId, target));
         assertEquals(1L, items.findUsage(List.of(ticketId), target, target).getFirst().quantity());
         Booking after = service.getMyBooking(original.getId(), userId);
-        assertTrue(after.getDate().equals(friday) || after.getDate().equals(target));
+        assertTrue(after.getDate().equals(saturday) || after.getDate().equals(target));
         assertEquals(new BigDecimal("25.00"), after.totalPrice());
     }
 
