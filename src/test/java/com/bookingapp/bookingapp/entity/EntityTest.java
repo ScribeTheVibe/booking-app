@@ -65,8 +65,8 @@ class EntityTest {
     @Test
     void bookingValidationOnPersistAndUpdate() {
         User user = new User("Alice", "Smith", "hash", "alice@example.com", "+1122334455");
-        LocalDate nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
-        Booking booking = new Booking(user, nextFriday, Session.MORNING);
+        LocalDate nextSaturday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.SATURDAY));
+        Booking booking = new Booking(user, nextSaturday, Session.MORNING);
 
         BookableResource ticket = new BookableResource("Morning Ticket", "Desc",
                 ResourceType.TICKET, new BigDecimal("30.00"), 50);
