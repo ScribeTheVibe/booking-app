@@ -24,4 +24,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @EntityGraph(attributePaths = {"items", "items.resource"})
     List<Booking> findByUserIdOrderByDateDescIdDesc(Long userId);
+
+    // ---------- Admin queries ----------
+
+    @EntityGraph(attributePaths = {"items", "items.resource"})
+    List<Booking> findAllByOrderByDateDescIdDesc();
+
+    @EntityGraph(attributePaths = {"items", "items.resource"})
+    Optional<Booking> findByIdWithItems(Long id);
 }
