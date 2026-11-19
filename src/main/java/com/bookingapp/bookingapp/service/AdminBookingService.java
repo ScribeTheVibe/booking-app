@@ -51,7 +51,7 @@ public class AdminBookingService {
 
     /** Find any booking by its id, regardless of owner. */
     public Booking getBookingById(Long bookingId) {
-        return bookingRepository.findByIdWithItems(bookingId)
+        return bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new EntityNotFoundException("Booking not found: " + bookingId));
     }
 
@@ -63,7 +63,7 @@ public class AdminBookingService {
      */
     @Transactional
     public Booking confirmBooking(Long bookingId) {
-        Booking booking = bookingRepository.findByIdWithItems(bookingId)
+        Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new EntityNotFoundException("Booking not found: " + bookingId));
         booking.confirm(clock);
         return booking;
@@ -74,7 +74,7 @@ public class AdminBookingService {
      */
     @Transactional
     public Booking rejectBooking(Long bookingId) {
-        Booking booking = bookingRepository.findByIdWithItems(bookingId)
+        Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new EntityNotFoundException("Booking not found: " + bookingId));
         booking.reject(clock);
         return booking;

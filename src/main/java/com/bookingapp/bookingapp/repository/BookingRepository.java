@@ -1,7 +1,7 @@
 package com.bookingapp.bookingapp.repository;
 
 import com.bookingapp.bookingapp.entity.Booking;
-import com.bookingapp.bookingapp.entity.BookingStatus;
+import lombok.NonNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,6 +30,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @EntityGraph(attributePaths = {"items", "items.resource"})
     List<Booking> findAllByOrderByDateDescIdDesc();
 
+    @NonNull
     @EntityGraph(attributePaths = {"items", "items.resource"})
-    Optional<Booking> findByIdWithItems(Long id);
+    Optional<Booking> findById(@NonNull Long id);
 }
