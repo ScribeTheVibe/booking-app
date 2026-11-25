@@ -6,7 +6,7 @@ import lombok.Getter;
 public class DuplicateFieldException extends RuntimeException {
     private final String field;
     public DuplicateFieldException(String field, String value){
-        super(field + "already in use: " + value);
+        super(field + " already in use: " + value);
         this.field = field;
     }
 }
