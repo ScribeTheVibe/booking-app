@@ -3,10 +3,12 @@ package com.bookingapp.bookingapp.service;
 import com.bookingapp.bookingapp.dto.RegisterUserRequest;
 import com.bookingapp.bookingapp.dto.UpdateUserRequest;
 import com.bookingapp.bookingapp.entity.User;
+import com.bookingapp.bookingapp.entity.UserStatus;
 import com.bookingapp.bookingapp.exception.*;
-import com.bookingapp.bookingapp.repository.BookingRepository;
 import com.bookingapp.bookingapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,6 +135,16 @@ public class UserService {
         }
         user.incrementTokenVersion();
         user.changePasswordHash(passwordEncoder.encode(newPassword));
+    }
+
+
+    @Transactional(readOnly = true)
+    public Page<User> listUsers(UserStatus status, Pageable pageable){
+        return switch (status){
+            case ACTIVE -> userRepository.findAll(pageable);
+            case DELETED -> userRepository.findAllDeleted(pageable);
+            case ALL -> userRepository.findAllIncludingDeleted(pageable);
+        };
     }
 
 }
