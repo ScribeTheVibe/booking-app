@@ -2,7 +2,6 @@ package com.bookingapp.bookingapp.controller;
 
 import com.bookingapp.bookingapp.dto.BookingResponse;
 import com.bookingapp.bookingapp.dto.BookingSummaryResponse;
-import com.bookingapp.bookingapp.dto.UserResponse;
 import com.bookingapp.bookingapp.entity.Booking;
 import com.bookingapp.bookingapp.entity.BookingStatus;
 import com.bookingapp.bookingapp.service.AdminBookingService;
@@ -63,9 +62,5 @@ public class AdminBookingController {
         return mapper.toResponse(adminBookingService.rejectBooking(id));
     }
 
-    /** Promote a user to admin. */
-    @PostMapping("/users/{userId}/promote")
-    public UserResponse promoteToAdmin(@PathVariable Long userId) {
-        return UserResponse.from(adminBookingService.promoteToAdmin(userId));
-    }
+
 }

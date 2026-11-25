@@ -1,6 +1,7 @@
 package com.bookingapp.bookingapp.controller;
 
 import com.bookingapp.bookingapp.dto.AdminUserResponse;
+import com.bookingapp.bookingapp.dto.UserResponse;
 import com.bookingapp.bookingapp.entity.UserStatus;
 import com.bookingapp.bookingapp.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/admin/users")
+@RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 public class AdminUserController {
 
@@ -22,7 +23,7 @@ public class AdminUserController {
 
     @GetMapping("/{id}")
     public AdminUserResponse getUser(@PathVariable Long id){
-        return AdminUserResponse.from(userService.getUserById(id));
+        return AdminUserResponse.from(userService.getUserByIdIncludingDeleted(id));
     }
 
     @GetMapping
@@ -36,5 +37,11 @@ public class AdminUserController {
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by("id"));
 
         return userService.listUsers(status, pageable).map(AdminUserResponse::from);
+    }
+
+    /** Promote a user to admin. */
+    @PostMapping("/{userId}/promote")
+    public AdminUserResponse promoteToAdmin(@PathVariable Long userId) {
+        return AdminUserResponse.from(userService.promoteToAdmin(userId));
     }
 }

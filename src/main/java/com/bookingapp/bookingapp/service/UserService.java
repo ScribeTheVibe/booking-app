@@ -6,6 +6,7 @@ import com.bookingapp.bookingapp.entity.User;
 import com.bookingapp.bookingapp.entity.UserStatus;
 import com.bookingapp.bookingapp.exception.*;
 import com.bookingapp.bookingapp.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -79,6 +80,12 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("No user with id: " + id));
     }
 
+    @Transactional(readOnly = true)
+    public User getUserByIdIncludingDeleted(Long id){
+        return userRepository.findByIdIncludingDeleted(id)
+                .orElseThrow(() -> new UserNotFoundException("No user with id: " + id));
+    }
+
 
     @Transactional
     public User updateUser(Long id,  UpdateUserRequest request){
@@ -147,4 +154,12 @@ public class UserService {
         };
     }
 
+
+    @Transactional
+    public User promoteToAdmin(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+        user.promoteToAdmin();
+        return userRepository.save(user);
+    }
 }

@@ -79,16 +79,4 @@ public class AdminBookingService {
         booking.reject(clock);
         return booking;
     }
-
-    /**
-     * Promote a user to admin. The user's {@code admin} flag is set to {@code true}.
-     * @return the updated user
-     */
-    @Transactional
-    public User promoteToAdmin(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
-        user.promoteToAdmin();
-        return userRepository.save(user);
-    }
 }
